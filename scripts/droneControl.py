@@ -20,8 +20,8 @@ adapter = pygatt.GATTToolBackend()
 
 device  = 0
 thrust  = 0
-t_max = 1024;
-t_min = 612;
+t_max = 960;
+t_min = 420;
 yaw     = 1024
 pitch   = 1024
 roll    = 1024
@@ -30,15 +30,17 @@ acro = 0
 watchdog = 0;
 watchdog_old = 0;
 hold = -1;
-hover_thrust = 860;
+hover_thrust = 630;
 
-pid = PID.PID(0.2, 0.1, 0.01)
+pid = PID.PID(0.25, 0.08, 0.02)
 pid.setWindup(150)
 
 
 def regler(ist,soll):
     pid.update(ist)
     t = hover_thrust + pid.output
+
+    
     # Save window
     if t < t_min:
         return t_min # don't want that rotor stop spinning
@@ -60,10 +62,10 @@ def joy_callback(data):
     arm   = data.buttons[4]*2047
     acro  = data.buttons[5]*2047
     
-    if acro > 1000 and hold <0:
+    if acro > 2000 and hold <0:
         hold = 400#tofSensor
         pid.SetPoint = 400#hold
-    elif acro > 1000 and hold >0:
+    elif acro > 2000 and hold >0:
         thrust = int(regler(tofSensor, hold))
         
     if acro <=1000:
@@ -131,7 +133,7 @@ def handle_data(handle, value):
     #rospy.loginfo("%d %s",len(value), binascii.hexlify(value))          
 def dashboard(publisher):
     global timer, framesend
-    publisher.publish((float(telBat)/1000), [telPitch, telRoll, telYaw], tofSensor, [float(timeused)/1000, float(totaltime)/1000],float(timeused)/float(11000)*100,[framemissed,framesuccess,framesend])
+    publisher.publish((float(telBat)/1000), [telPitch, telRoll, telYaw], tofSensor,thrust, [float(timeused)/1000, float(totaltime)/1000],float(timeused)/float(11000)*100,[framemissed,framesuccess,framesend])
     if time.time()-timer >= 1:
         framesend = 0;
         timer = time.time()  
@@ -168,8 +170,13 @@ def main():
                 subscribed = False
 
             if connected and not subscribed:
-                device.subscribe("2d30c082-f39f-4ce6-923f-3484ea480596",callback=handle_data)
-                subscribed = True
+                try:
+                    device.subscribe("2d30c082-f39f-4ce6-923f-3484ea480596",callback=handle_data)
+                    rospy.loginfo("subscribed to : 2d30c082-f39f-4ce6-923f-3484ea480596")
+                    subscribed = True
+                except pygatt.exceptions.NotConnectedError as e:
+                    rospy.loginfo("subscribtion error : 2d30c082-f39f-4ce6-923f-3484ea480596 "+ str(e))
+                    subscribed = False
                 
             if watchdog_old < watchdog: # only send Data if we get new Data From Joy
                 watchdog_old = watchdog
