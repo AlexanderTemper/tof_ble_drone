@@ -1,7 +1,9 @@
 # Spektrum RC with Betaflight using Simblee, ROS and TOF Sensor
 Aim of this Project is to control a drone from the computer using a joystick. On Pc side ROS is used to read data from a joystick and send it over BLE to the Simblee. The Simblee then generates the Spektrum 2048 frame (only 7 channels are used) which is then sent over the UART to the flight controller. The flight controller sends back Telemetry using the LTM protocol. Also on the drone an Time of Flight sensor is present. This sensor communicates with the Simblee (over I2C) and sends it data also over BLE in an LTM Frame (custom one) to the PC.
 
-Drone hardware used:
+# Components:
+
+## drone hardware used
 
 | Component  | |
 | ------------- | ------------- |
@@ -16,32 +18,43 @@ Drone hardware used:
 | Bluetooth Modul Drone | Simblee |
 
 
-computer hardware used:
+## computer hardware used
 
 | Component  | |
 | ------------- | ------------- |
 | USB Bluetooth Dongle | LogiLink-BT0015 |
 | Joystick | Sony DualShock 3 |
 
-computer software used:
+## computer software used
 
 | Component  | |
 | ------------- | ------------- |
 | OS | Ubuntu-Mate 18.04 |
 | ROS-Version | melodic,1.14.3 |
 
-schematic:
+# Schematic:
+![alt text](https://raw.githubusercontent.com/AlexanderTemper/tof_ble_drone/master/doku/schematic.png "schematic")
 
-
-
-
-
-# Setting up pygatt
+# Setting up pygatt:
 ```
 sudo apt-get install python-pip
 pip install pygatt
 pip install pexpect
 ```
+
+
+# Install and Building Simblee Firmware:
+1. download Arduino 1.6.9 
+2. add https://www.simblee.com/package_simblee166_index.json to "Additional Boards Manager URLs"
+3. download Simblee Library via Boards Manager
+4. select Simblee
+5. Include Library VL53L0X from https://github.com/pololu/vl53l0x-arduino
+6. add user to dialout 
+```
+sudo usermod -a -G dialout <username> 
+```
+7. Load and build [drone.ino](https://github.com/AlexanderTemper/tof_ble_drone/blob/master/arduinosrc/drone.ino)
+
 
 # Install and Building the ROS Nodes:
 
@@ -70,7 +83,7 @@ catkin_make
 source devel/setup.bash
 ```
 
-# Launching
+# Launching:
 
 ```
 roslaunch tof_ble_drone drone.launch --screen
